@@ -1,12 +1,902 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Biochem Label Station</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Biochem Study Station</title>
+  <style>
+    :root {
+      --bg: #f6f8fc;
+      --card: #ffffff;
+      --ink: #172033;
+      --muted: #5d6b88;
+      --line: #dbe3f0;
+      --accent: #4f46e5;
+      --accent-soft: #eef2ff;
+      --good: #dff7e8;
+      --good-line: #7dd3a4;
+      --bad: #fde7e7;
+      --bad-line: #f1a8a8;
+      --shadow: 0 16px 40px rgba(28, 39, 71, 0.08);
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    .app {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .section {
+      padding: 20px;
+    }
+
+    .title-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: 30px; }
+    h2 { font-size: 22px; }
+    .subtle { color: var(--muted); font-size: 14px; margin-top: 6px; }
+
+    .badge {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid #c7d2fe;
+      border-radius: 999px;
+      padding: 9px 14px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .toolbar, .stack, .field-group, .teacher-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .toolbar { margin-bottom: 16px; }
+    .stack { flex-direction: column; }
+
+    button, input, textarea, select {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--ink);
+      border-radius: 16px;
+      padding: 11px 14px;
+      cursor: pointer;
+      transition: 0.18s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(31, 41, 55, 0.08);
+    }
+
+    button.primary {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    button.active {
+      background: #111827;
+      color: white;
+      border-color: #111827;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 14px;
+    }
+
+    .progress-shell {
+      width: 100%;
+      height: 12px;
+      border-radius: 999px;
+      background: #e8edf8;
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #6366f1, #22c55e);
+      transition: width 0.2s ease;
+    }
+
+    .board {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      border-radius: 28px;
+      border: 1px solid var(--line);
+      overflow: hidden;
+      background: white;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.02);
+    }
+
+    .board.teacher {
+      cursor: crosshair;
+    }
+
+    .board-image,
+    .board-placeholder {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .board-image {
+      object-fit: contain;
+      background: #fbfcff;
+    }
+
+    .board-placeholder {
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      text-align: center;
+      padding: 20px;
+    }
+
+    .zone {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      min-width: 130px;
+      max-width: 220px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.92);
+      padding: 10px 12px;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 10px 22px rgba(0,0,0,0.08);
+      font-size: 14px;
+    }
+
+    .zone.good {
+      background: var(--good);
+      border-color: var(--good-line);
+    }
+
+    .zone.bad {
+      background: var(--bad);
+      border-color: var(--bad-line);
+    }
+
+    .zone-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .zone-index {
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      background: #111827;
+      color: white;
+      display: inline-grid;
+      place-items: center;
+      font-size: 12px;
+      flex: 0 0 auto;
+    }
+
+    .teacher-pin {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.95);
+      border: 2px solid var(--accent);
+      box-shadow: 0 10px 18px rgba(79, 70, 229, 0.15);
+      font-size: 12px;
+      font-weight: 700;
+      pointer-events: none;
+      max-width: 220px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sidebar {
+      display: grid;
+      gap: 20px;
+      align-content: start;
+    }
+
+    .label-bank {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .label-chip {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: white;
+      padding: 12px;
+      cursor: grab;
+      box-shadow: 0 8px 14px rgba(0,0,0,0.04);
+      user-select: none;
+    }
+
+    .label-chip:active { cursor: grabbing; }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .field label {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    input, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px 14px;
+      background: white;
+      color: var(--ink);
+    }
+
+    textarea {
+      min-height: 96px;
+      resize: vertical;
+    }
+
+    .status {
+      border-radius: 18px;
+      background: #f3f6fb;
+      padding: 12px 14px;
+      color: var(--muted);
+      white-space: pre-wrap;
+    }
+
+    .upload-box {
+      border: 1px dashed #b7c4de;
+      border-radius: 18px;
+      padding: 18px;
+      text-align: center;
+      background: #fbfcff;
+    }
+
+    .helper {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .teacher-list {
+      border-radius: 18px;
+      background: #f3f6fb;
+      padding: 12px 14px;
+      font-size: 14px;
+      white-space: pre-wrap;
+      min-height: 72px;
+    }
+
+    .mini-title {
+      font-size: 13px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    @media (max-width: 1000px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .label-bank {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .app {
+        padding: 12px;
+      }
+
+      .section {
+        padding: 16px;
+      }
+
+      .label-bank {
+        grid-template-columns: 1fr;
+      }
+
+      h1 { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="card">
+      <div class="section">
+        <div class="title-row">
+          <div>
+            <h1>Biochem Study Station</h1>
+            <p class="subtle">A GitHub Pages-friendly practice board for pathway maps, illustrations, and labeling drills 🧪</p>
+          </div>
+          <div class="badge" id="scoreBadge">0/0 correct</div>
+        </div>
+
+        <div class="toolbar">
+          <button id="prevBtn">Previous</button>
+          <button id="nextBtn" class="primary">Next Question</button>
+          <button id="resetBtn">Reset</button>
+          <button id="showAnswersBtn">Show Answers</button>
+          <button id="saveSessionBtn">Save Session</button>
+          <button id="teacherModeBtn">Teacher Mode</button>
+        </div>
+
+        <div class="meta">
+          <strong id="diagramTitle">Loading...</strong>
+          <span>•</span>
+          <span id="diagramPrompt">Preparing the board...</span>
+        </div>
+
+        <div class="progress-shell">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <div class="board" id="board"></div>
+      </div>
+    </div>
+
+    <div class="sidebar">
+      <div class="card">
+        <div class="section">
+          <h2>Label Bank</h2>
+          <p class="subtle">Drag a label chip onto a numbered target on the board.</p>
+          <div class="label-bank" id="labelBank"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section stack">
+          <h2>Data + Import</h2>
+
+          <div class="field">
+            <label for="csvUrl">Google Sheet CSV URL</label>
+            <input id="csvUrl" type="text" placeholder="Paste published CSV URL here" />
+            <button id="loadCsvBtn" class="primary">Load Sheet Question Bank</button>
+            <div class="helper">Use File → Share → Publish to web in Google Sheets, then publish a sheet tab as CSV.</div>
+          </div>
+
+          <div class="field">
+            <label for="imageUpload">Upload Diagram</label>
+            <div class="upload-box">
+              <input id="imageUpload" type="file" accept="image/*" />
+              <div class="helper" style="margin-top:8px;">Great for lecture screenshots, pathways, metabolic maps, or textbook figures.</div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="customPrompt">Prompt</label>
+            <textarea id="customPrompt" placeholder="Optional prompt for your current board"></textarea>
+          </div>
+
+          <div class="field">
+            <label>Status</label>
+            <div class="status" id="statusBox">Demo mode loaded.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section stack">
+          <h2>Teacher Mode</h2>
+          <p class="subtle">Add your own answer targets by typing a label and clicking the image.</p>
+
+          <div class="field">
+            <label for="teacherTitle">Diagram Title</label>
+            <input id="teacherTitle" type="text" value="Custom Diagram" />
+          </div>
+
+          <div class="field">
+            <label for="teacherLabels">Label Bank</label>
+            <input id="teacherLabels" type="text" placeholder="ATP|NADH|Citrate|Acetyl-CoA" />
+            <div class="helper">Separate labels with a vertical bar <strong>|</strong>.</div>
+          </div>
+
+          <div class="field">
+            <label for="teacherAnswer">Next Target Label</label>
+            <input id="teacherAnswer" type="text" placeholder="Type label, then click image to place it" />
+          </div>
+
+          <div class="teacher-actions">
+            <button id="useTeacherBoardBtn" class="primary">Use as Practice Board</button>
+            <button id="exportTeacherCsvBtn">Export CSV Row</button>
+            <button id="clearTeacherZonesBtn">Clear Teacher Zones</button>
+          </div>
+
+          <div>
+            <div class="mini-title">Teacher targets</div>
+            <div class="teacher-list" id="teacherList">No teacher zones placed yet.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const DEMO_QUESTIONS = [
+      {
+        id: 'glycolysis-regulated-steps',
+        diagramTitle: 'Glycolysis Overview',
+        imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Glycolysis2.svg/1280px-Glycolysis2.svg.png',
+        prompt: 'Label the three classic regulated steps.',
+        labels: ['Hexokinase', 'PFK-1', 'Pyruvate kinase'],
+        zones: [
+          { id: 'z1', x: 16, y: 17, answer: 'Hexokinase' },
+          { id: 'z2', x: 25, y: 44, answer: 'PFK-1' },
+          { id: 'z3', x: 67, y: 83, answer: 'Pyruvate kinase' }
+        ]
+      },
+      {
+        id: 'citric-acid-cycle',
+        diagramTitle: 'Citric Acid Cycle',
+        imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Citric_acid_cycle_with_aconitate_2.svg/1280px-Citric_acid_cycle_with_aconitate_2.svg.png',
+        prompt: 'Place the major regulatory enzymes around the cycle.',
+        labels: ['Citrate synthase', 'Isocitrate dehydrogenase', 'α-Ketoglutarate dehydrogenase'],
+        zones: [
+          { id: 'z1', x: 49, y: 16, answer: 'Citrate synthase' },
+          { id: 'z2', x: 77, y: 41, answer: 'Isocitrate dehydrogenase' },
+          { id: 'z3', x: 52, y: 82, answer: 'α-Ketoglutarate dehydrogenase' }
+        ]
+      }
+    ];
+
+    const state = {
+      questions: [...DEMO_QUESTIONS],
+      questionIndex: 0,
+      placements: {},
+      showAnswers: false,
+      draggingLabel: null,
+      localImage: '',
+      teacherMode: false,
+      teacherZones: []
+    };
+
+    const els = {
+      board: document.getElementById('board'),
+      labelBank: document.getElementById('labelBank'),
+      diagramTitle: document.getElementById('diagramTitle'),
+      diagramPrompt: document.getElementById('diagramPrompt'),
+      scoreBadge: document.getElementById('scoreBadge'),
+      progressBar: document.getElementById('progressBar'),
+      statusBox: document.getElementById('statusBox'),
+      csvUrl: document.getElementById('csvUrl'),
+      customPrompt: document.getElementById('customPrompt'),
+      imageUpload: document.getElementById('imageUpload'),
+      teacherModeBtn: document.getElementById('teacherModeBtn'),
+      teacherAnswer: document.getElementById('teacherAnswer'),
+      teacherLabels: document.getElementById('teacherLabels'),
+      teacherTitle: document.getElementById('teacherTitle'),
+      teacherList: document.getElementById('teacherList')
+    };
+
+    function currentQuestion() {
+      return state.questions[state.questionIndex] || state.questions[0];
+    }
+
+    function normalizeAnswer(value) {
+      return String(value || '').trim().toLowerCase();
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
+    }
+
+    function setStatus(message) {
+      els.statusBox.textContent = message;
+    }
+
+    function splitCsvLine(line) {
+      const result = [];
+      let current = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        const next = line[i + 1];
+        if (char === '"') {
+          if (inQuotes && next === '"') {
+            current += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (char === ',' && !inQuotes) {
+          result.push(current);
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      result.push(current);
+      return result;
+    }
+
+    function parseCsv(text) {
+      const lines = text.trim().split(/\r?\n/).filter(Boolean);
+      if (!lines.length) return [];
+      const headers = splitCsvLine(lines[0]);
+      return lines.slice(1).map((line, idx) => {
+        const cells = splitCsvLine(line);
+        const row = {};
+        headers.forEach((h, i) => row[h.trim()] = (cells[i] || '').trim());
+        const labels = (row.labels || '').split('|').map(s => s.trim()).filter(Boolean);
+        const zones = (row.zones || '').split('|').map((chunk, zoneIdx) => {
+          const [answer, x, y] = chunk.split('@');
+          if (!answer || x === undefined || y === undefined) return null;
+          return {
+            id: 'z' + (zoneIdx + 1),
+            answer: answer.trim(),
+            x: Number(x),
+            y: Number(y)
+          };
+        }).filter(Boolean);
+
+        return {
+          id: row.id || ('row-' + (idx + 1)),
+          diagramTitle: row.diagramTitle || 'Untitled Diagram',
+          imageUrl: row.imageUrl || '',
+          prompt: row.prompt || 'Label the diagram.',
+          labels,
+          zones
+        };
+      }).filter(q => q.imageUrl && q.labels.length && q.zones.length);
+    }
+
+    function resetPlacements() {
+      const q = currentQuestion();
+      state.placements = {};
+      (q.zones || []).forEach(zone => {
+        state.placements[zone.id] = '';
+      });
+      state.showAnswers = false;
+    }
+
+    function getScore() {
+      const q = currentQuestion();
+      const total = (q.zones || []).length;
+      let correct = 0;
+      q.zones.forEach(zone => {
+        if (normalizeAnswer(state.placements[zone.id]) === normalizeAnswer(zone.answer)) {
+          correct += 1;
+        }
+      });
+      return { correct, total };
+    }
+
+    function renderLabelBank() {
+      const q = currentQuestion();
+      els.labelBank.innerHTML = '';
+      q.labels.forEach(label => {
+        const chip = document.createElement('div');
+        chip.className = 'label-chip';
+        chip.draggable = true;
+        chip.textContent = label;
+        chip.addEventListener('dragstart', () => {
+          state.draggingLabel = label;
+        });
+        chip.addEventListener('dragend', () => {
+          state.draggingLabel = null;
+        });
+        els.labelBank.appendChild(chip);
+      });
+    }
+
+    function renderTeacherList() {
+      if (!state.teacherZones.length) {
+        els.teacherList.textContent = 'No teacher zones placed yet.';
+        return;
+      }
+      els.teacherList.textContent = state.teacherZones.map((zone, i) => {
+        return (i + 1) + '. ' + zone.answer + ' @ ' + Math.round(zone.x) + '%, ' + Math.round(zone.y) + '%';
+      }).join('\n');
+    }
+
+    function renderBoard() {
+      const q = currentQuestion();
+      const score = getScore();
+      const progress = score.total ? Math.round((score.correct / score.total) * 100) : 0;
+      const imageToShow = state.localImage || q.imageUrl;
+
+      els.board.className = 'board' + (state.teacherMode ? ' teacher' : '');
+      els.board.innerHTML = '';
+
+      if (imageToShow) {
+        const img = document.createElement('img');
+        img.className = 'board-image';
+        img.src = imageToShow;
+        img.alt = q.diagramTitle;
+        els.board.appendChild(img);
+      } else {
+        const placeholder = document.createElement('div');
+        placeholder.className = 'board-placeholder';
+        placeholder.innerHTML = '<div><strong>No diagram yet.</strong><br />Upload an image or load a question set.</div>';
+        els.board.appendChild(placeholder);
+      }
+
+      q.zones.forEach((zone, index) => {
+        const placed = state.placements[zone.id] || '';
+        const isCorrect = placed && normalizeAnswer(placed) === normalizeAnswer(zone.answer);
+        const isWrong = placed && !isCorrect;
+        const zoneEl = document.createElement('div');
+        zoneEl.className = 'zone' + (isCorrect ? ' good' : '') + (isWrong ? ' bad' : '');
+        zoneEl.style.left = clamp(zone.x, 5, 95) + '%';
+        zoneEl.style.top = clamp(zone.y, 5, 95) + '%';
+        zoneEl.addEventListener('dragover', e => e.preventDefault());
+        zoneEl.addEventListener('drop', e => {
+          e.preventDefault();
+          if (!state.draggingLabel) return;
+          state.placements[zone.id] = state.draggingLabel;
+          render();
+        });
+
+        const shownText = state.showAnswers ? zone.answer : (placed || ('Drop ' + (index + 1)));
+        zoneEl.innerHTML = '<div class="zone-row"><span class="zone-index">' + (index + 1) + '</span><span>' + escapeHtml(shownText) + '</span></div>';
+        els.board.appendChild(zoneEl);
+      });
+
+      if (state.teacherMode) {
+        state.teacherZones.forEach((zone, index) => {
+          const pin = document.createElement('div');
+          pin.className = 'teacher-pin';
+          pin.style.left = clamp(zone.x, 3, 97) + '%';
+          pin.style.top = clamp(zone.y, 3, 97) + '%';
+          pin.textContent = (index + 1) + '. ' + zone.answer;
+          els.board.appendChild(pin);
+        });
+      }
+
+      els.diagramTitle.textContent = q.diagramTitle;
+      els.diagramPrompt.textContent = els.customPrompt.value.trim() || q.prompt;
+      els.scoreBadge.textContent = score.correct + '/' + score.total + ' correct';
+      els.progressBar.style.width = progress + '%';
+      els.teacherModeBtn.textContent = state.teacherMode ? 'Exit Teacher Mode' : 'Teacher Mode';
+      els.teacherModeBtn.className = state.teacherMode ? 'active' : '';
+    }
+
+    function render() {
+      renderLabelBank();
+      renderBoard();
+      renderTeacherList();
+    }
+
+    function downloadText(filename, content, mimeType) {
+      const blob = new Blob([content], { type: mimeType || 'application/json' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    document.getElementById('prevBtn').addEventListener('click', () => {
+      state.questionIndex = (state.questionIndex - 1 + state.questions.length) % state.questions.length;
+      state.localImage = '';
+      resetPlacements();
+      render();
+    });
+
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      state.questionIndex = (state.questionIndex + 1) % state.questions.length;
+      state.localImage = '';
+      resetPlacements();
+      render();
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      resetPlacements();
+      render();
+    });
+
+    document.getElementById('showAnswersBtn').addEventListener('click', () => {
+      state.showAnswers = !state.showAnswers;
+      document.getElementById('showAnswersBtn').textContent = state.showAnswers ? 'Hide Answers' : 'Show Answers';
+      render();
+    });
+
+    document.getElementById('saveSessionBtn').addEventListener('click', () => {
+      const q = currentQuestion();
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        questionId: q.id,
+        diagramTitle: q.diagramTitle,
+        prompt: els.customPrompt.value.trim() || q.prompt,
+        placements: state.placements,
+        score: getScore()
+      };
+      downloadText((q.id || 'session') + '-session.json', JSON.stringify(payload, null, 2), 'application/json');
+    });
+
+    document.getElementById('teacherModeBtn').addEventListener('click', () => {
+      state.teacherMode = !state.teacherMode;
+      render();
+    });
+
+    els.board.addEventListener('click', (event) => {
+      if (!state.teacherMode) return;
+      const answer = els.teacherAnswer.value.trim();
+      if (!answer) {
+        setStatus('Teacher mode is on. Type a label in “Next Target Label,” then click the image to place it.');
+        return;
+      }
+      const rect = els.board.getBoundingClientRect();
+      const x = ((event.clientX - rect.left) / rect.width) * 100;
+      const y = ((event.clientY - rect.top) / rect.height) * 100;
+      state.teacherZones.push({
+        id: 'tz' + (state.teacherZones.length + 1),
+        answer,
+        x: clamp(x, 0, 100),
+        y: clamp(y, 0, 100)
+      });
+      els.teacherAnswer.value = '';
+      setStatus('Placed teacher target: ' + answer);
+      render();
+    });
+
+    document.getElementById('loadCsvBtn').addEventListener('click', async () => {
+      const url = els.csvUrl.value.trim();
+      if (!url) {
+        setStatus('Paste a published Google Sheet CSV URL first.');
+        return;
+      }
+      try {
+        setStatus('Loading question bank from sheet...');
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const text = await response.text();
+        const parsed = parseCsv(text);
+        if (!parsed.length) throw new Error('No usable rows found in the CSV.');
+        state.questions = parsed;
+        state.questionIndex = 0;
+        state.localImage = '';
+        resetPlacements();
+        setStatus('Loaded ' + parsed.length + ' question(s) from Google Sheets.');
+        render();
+      } catch (error) {
+        setStatus('Could not load the sheet: ' + error.message + '\nIf this is a Google Sheet, make sure it is published to the web as CSV.');
+      }
+    });
+
+    els.imageUpload.addEventListener('change', (event) => {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      state.localImage = URL.createObjectURL(file);
+      if (!els.customPrompt.value.trim()) {
+        els.customPrompt.value = 'Practice board for ' + file.name;
+      }
+      setStatus('Loaded local image: ' + file.name);
+      render();
+    });
+
+    els.customPrompt.addEventListener('input', render);
+
+    document.getElementById('clearTeacherZonesBtn').addEventListener('click', () => {
+      state.teacherZones = [];
+      setStatus('Teacher targets cleared.');
+      render();
+    });
+
+    document.getElementById('useTeacherBoardBtn').addEventListener('click', () => {
+      const imageUrl = state.localImage || currentQuestion().imageUrl;
+      if (!imageUrl) {
+        setStatus('Upload an image first, or start from a board that already has an image.');
+        return;
+      }
+      if (!state.teacherZones.length) {
+        setStatus('Place at least one teacher target before turning it into a practice board.');
+        return;
+      }
+      const enteredLabels = els.teacherLabels.value
+        .split('|')
+        .map(item => item.trim())
+        .filter(Boolean);
+
+      const newQuestion = {
+        id: 'custom-' + Date.now(),
+        diagramTitle: els.teacherTitle.value.trim() || 'Custom Diagram',
+        imageUrl,
+        prompt: els.customPrompt.value.trim() || 'Label the diagram.',
+        labels: enteredLabels.length ? enteredLabels : state.teacherZones.map(zone => zone.answer),
+        zones: state.teacherZones.map((zone, index) => ({
+          id: 'z' + (index + 1),
+          answer: zone.answer,
+          x: zone.x,
+          y: zone.y
+        }))
+      };
+
+      state.questions.unshift(newQuestion);
+      state.questionIndex = 0;
+      resetPlacements();
+      state.teacherMode = false;
+      setStatus('Teacher board converted into a live practice board.');
+      render();
+    });
+
+    document.getElementById('exportTeacherCsvBtn').addEventListener('click', () => {
+      const imageUrl = state.localImage || currentQuestion().imageUrl;
+      if (!imageUrl) {
+        setStatus('You need an image before exporting a teacher CSV row.');
+        return;
+      }
+      if (!state.teacherZones.length) {
+        setStatus('Add at least one teacher target before exporting CSV.');
+        return;
+      }
+      const labels = els.teacherLabels.value.split('|').map(item => item.trim()).filter(Boolean);
+      const zonesText = state.teacherZones.map(zone => zone.answer + '@' + Math.round(zone.x) + '@' + Math.round(zone.y)).join('|');
+      const row = [
+        'custom-' + Date.now(),
+        els.teacherTitle.value.trim() || 'Custom Diagram',
+        imageUrl,
+        els.customPrompt.value.trim() || 'Label the diagram.',
+        labels.join('|'),
+        zonesText
+      ].map(value => '"' + String(value).replaceAll('"', '""') + '"').join(',');
+
+      const header = '"id","diagramTitle","imageUrl","prompt","labels","zones"';
+      downloadText('teacher-mode-row.csv', header + '\n' + row, 'text/csv;charset=utf-8');
+      setStatus('Exported teacher-mode CSV row. Paste it into your Google Sheet question bank.');
+    });
+
+    resetPlacements();
+    render();
+  </script>
+</body>
 </html>
