@@ -258,6 +258,16 @@
 
     .label-chip:active { cursor: grabbing; }
 
+    .zone-input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 8px 10px;
+      background: white;
+      color: var(--ink);
+      min-width: 0;
+    }
+
     .field {
       display: flex;
       flex-direction: column;
@@ -368,6 +378,7 @@
           <button id="resetBtn">Reset</button>
           <button id="showAnswersBtn">Show Answers</button>
           <button id="saveSessionBtn">Save Session</button>
+          <button id="typingModeBtn">Type Answers</button>
           <button id="teacherModeBtn">Teacher Mode</button>
         </div>
 
@@ -497,6 +508,7 @@
       draggingLabel: null,
       localImage: '',
       teacherMode: false,
+      typingMode: false,
       teacherZones: []
     };
 
@@ -515,7 +527,8 @@
       teacherAnswer: document.getElementById('teacherAnswer'),
       teacherLabels: document.getElementById('teacherLabels'),
       teacherTitle: document.getElementById('teacherTitle'),
-      teacherList: document.getElementById('teacherList')
+      teacherList: document.getElementById('teacherList'),
+      typingModeBtn: document.getElementById('typingModeBtn')
     };
 
     function currentQuestion() {
@@ -614,6 +627,10 @@
     function renderLabelBank() {
       const q = currentQuestion();
       els.labelBank.innerHTML = '';
+      if (state.typingMode) {
+        els.labelBank.innerHTML = '<div class="helper">Typing mode is on. Type answers directly into the numbered targets on the board.</div>';
+        return;
+      }
       q.labels.forEach(label => {
         const chip = document.createElement('div');
         chip.className = 'label-chip';
@@ -678,7 +695,17 @@
         });
 
         const shownText = state.showAnswers ? zone.answer : (placed || ('Drop ' + (index + 1)));
-        zoneEl.innerHTML = '<div class="zone-row"><span class="zone-index">' + (index + 1) + '</span><span>' + escapeHtml(shownText) + '</span></div>';
+        if (state.typingMode && !state.showAnswers) {
+          zoneEl.innerHTML = '<div class="zone-row"><span class="zone-index">' + (index + 1) + '</span><input class="zone-input" type="text" placeholder="Type answer" value="' + escapeHtml(placed) + '" /></div>';
+          const input = zoneEl.querySelector('.zone-input');
+          input.addEventListener('click', e => e.stopPropagation());
+          input.addEventListener('input', e => {
+            state.placements[zone.id] = e.target.value;
+            renderBoard();
+          });
+        } else {
+          zoneEl.innerHTML = '<div class="zone-row"><span class="zone-index">' + (index + 1) + '</span><span>' + escapeHtml(shownText) + '</span></div>';
+        }
         els.board.appendChild(zoneEl);
       });
 
@@ -699,6 +726,8 @@
       els.progressBar.style.width = progress + '%';
       els.teacherModeBtn.textContent = state.teacherMode ? 'Exit Teacher Mode' : 'Teacher Mode';
       els.teacherModeBtn.className = state.teacherMode ? 'active' : '';
+      els.typingModeBtn.textContent = state.typingMode ? 'Drag Labels Mode' : 'Type Answers';
+      els.typingModeBtn.className = state.typingMode ? 'active' : '';
     }
 
     function render() {
@@ -765,6 +794,14 @@
 
     document.getElementById('teacherModeBtn').addEventListener('click', () => {
       state.teacherMode = !state.teacherMode;
+      render();
+    });
+
+    document.getElementById('typingModeBtn').addEventListener('click', () => {
+      state.typingMode = !state.typingMode;
+      setStatus(state.typingMode
+        ? 'Typing mode is on. Enter answers directly into each numbered target.'
+        : 'Drag-label mode is back on. Use the label bank to place answers.');
       render();
     });
 
