@@ -473,32 +473,32 @@
   </div>
 
   <script>
-    const DEMO_QUESTIONS = [
-      {
-        id: 'glycolysis-regulated-steps',
-        diagramTitle: 'Glycolysis Overview',
-        imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Glycolysis2.svg/1280px-Glycolysis2.svg.png',
-        prompt: 'Label the three classic regulated steps.',
-        labels: ['Hexokinase', 'PFK-1', 'Pyruvate kinase'],
-        zones: [
-          { id: 'z1', x: 16, y: 17, answer: 'Hexokinase' },
-          { id: 'z2', x: 25, y: 44, answer: 'PFK-1' },
-          { id: 'z3', x: 67, y: 83, answer: 'Pyruvate kinase' }
-        ]
-      },
-      {
-        id: 'citric-acid-cycle',
-        diagramTitle: 'Citric Acid Cycle',
-        imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Citric_acid_cycle_with_aconitate_2.svg/1280px-Citric_acid_cycle_with_aconitate_2.svg.png',
-        prompt: 'Place the major regulatory enzymes around the cycle.',
-        labels: ['Citrate synthase', 'Isocitrate dehydrogenase', 'α-Ketoglutarate dehydrogenase'],
-        zones: [
-          { id: 'z1', x: 49, y: 16, answer: 'Citrate synthase' },
-          { id: 'z2', x: 77, y: 41, answer: 'Isocitrate dehydrogenase' },
-          { id: 'z3', x: 52, y: 82, answer: 'α-Ketoglutarate dehydrogenase' }
-        ]
-      }
-    ];
+const DEMO_QUESTIONS = [
+  {
+    id: 'glycolysis-regulated-steps',
+    diagramTitle: 'Glycolysis Overview',
+    imageUrl: './images/glycolysis-overview.png',
+    prompt: 'Label the three classic regulated steps.',
+    labels: ['Hexokinase', 'PFK-1', 'Pyruvate kinase'],
+    zones: [
+      { id: 'z1', x: 16, y: 17, answer: 'Hexokinase' },
+      { id: 'z2', x: 25, y: 44, answer: 'PFK-1' },
+      { id: 'z3', x: 67, y: 83, answer: 'Pyruvate kinase' }
+    ]
+  },
+  {
+    id: 'citric-acid-cycle',
+    diagramTitle: 'Citric Acid Cycle',
+    imageUrl: './images/citric-acid-cycle.png',
+    prompt: 'Place the major regulatory enzymes around the cycle.',
+    labels: ['Citrate synthase', 'Isocitrate dehydrogenase', 'α-Ketoglutarate dehydrogenase'],
+    zones: [
+      { id: 'z1', x: 49, y: 16, answer: 'Citrate synthase' },
+      { id: 'z2', x: 77, y: 41, answer: 'Isocitrate dehydrogenase' },
+      { id: 'z3', x: 52, y: 82, answer: 'α-Ketoglutarate dehydrogenase' }
+    ]
+  }
+];
 
     const state = {
       questions: [...DEMO_QUESTIONS],
